@@ -74,6 +74,7 @@ class TowerOfHanoiGame(GameMaster):
 
         return tuple(ret_lst)
 
+
     def makeMove(self, movable_statement):
         """
         Takes a MOVABLE statement and makes the corresponding move. This will
@@ -101,19 +102,19 @@ class TowerOfHanoiGame(GameMaster):
         if self.kb.kb_ask(Fact(Statement(["onTopOf", disk, '?X']))):
             under = self.kb.kb_ask(Fact(Statement(["onTopOf", disk, '?X'])))[0].bindings_dict['?X']
             self.kb.kb_retract(Fact(Statement(['onTopOf', disk, under])))
+            self.kb.kb_assert(Fact(Statement(['top', under, op])))
         else:
             self.kb.kb_assert(Fact(Statement(['empty', op])))
 
-        if parse_input("fact: (empty %s)" % np):
+        if self.kb.kb_ask(Fact(Statement(['empty', np]))):
             self.kb.kb_retract(Fact(Statement(['empty', np])))
+        else:
+            disk_np = self.kb.kb_ask(Fact(Statement(['top', '?X', np])))[0].bindings_dict['?X']
+            self.kb.kb_assert(Fact(Statement(['onTopOf', disk, disk_np])))
+            self.kb.kb_retract(Fact(Statement(['top', disk_np, np])))
 
         self.kb.kb_retract(Fact(Statement(['top', disk, op])))
         self.kb.kb_assert(Fact(Statement(['top', disk, np])))
-
-        if self.kb.kb_ask(Fact(Statement(['onTopOf', '?X', np]))):
-            rep = self.kb.kb_ask(Fact(Statement(['onTopOf', '?X', np])))[0].bindings_dict['?X']
-            self.kb.kb_retract(Fact(Statement(['onTop', rep, np])))
-            self.kb.kb_assert(Fact(Statement(['onTopOf', disk, rep])))
 
     def reverseMove(self, movable_statement):
         """
@@ -160,10 +161,11 @@ class Puzzle8Game(GameMaster):
             A Tuple of Tuples that represent the game state
         """
         ### Student code goes here
-        t_dict = {"tile1": 1, "tile2": 2, "tile3": 3, "tile4": 4, "tile5": 5, "tile6": 6, "tile7": 7, "tile8": 8, "empty": -1}
+        t_dict = {"tile1": 1, "tile2": 2, "tile3": 3, "tile4": 4, "tile5": 5, "tile6": 6, "tile7": 7, "tile8": 8,
+                  "empty": -1}
         x_dict = {"pos1": 0, "pos2": 1, "pos3": 2}
 
-        list_r1 = [0,0,0]
+        list_r1 = [0, 0, 0]
         for i in self.kb.kb_ask(Fact(Statement(["coordinate", '?tile', '?X', "pos1"]))):
             list_r1[x_dict[i.bindings_dict['?X']]] = t_dict[i.bindings_dict['?tile']]
 
