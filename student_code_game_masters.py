@@ -34,7 +34,45 @@ class TowerOfHanoiGame(GameMaster):
             A Tuple of Tuples that represent the game state
         """
         ### student code goes here
-        pass
+        ret_lst = list()
+
+        tup1 = self.kb.kb_ask(parse_input("fact: (on ?X peg1)"))
+        t1lst = list()
+
+        tup2 = self.kb.kb_ask(parse_input("fact: (on ?X peg2)"))
+        t2lst = list()
+
+        tup3 = self.kb.kb_ask(parse_input("fact: (on ?X peg3)"))
+        t3lst = list()
+
+        if not tup1:
+            pass
+        else:
+            for i in tup1:
+                t1lst.append(int(str(i)[-1]))
+
+        t1lst.sort()
+        ret_lst.append(tuple(t1lst))
+
+        if not tup2:
+            pass
+        else:
+            for i in tup2:
+                t2lst.append(int(str(i)[-1]))
+
+        t2lst.sort()
+        ret_lst.append(tuple(t2lst))
+
+        if not tup3:
+            pass
+        else:
+            for i in tup3:
+                t3lst.append(int(str(i)[-1]))
+
+        t3lst.sort()
+        ret_lst.append(tuple(t3lst))
+
+        return tuple(ret_lst)
 
     def makeMove(self, movable_statement):
         """
@@ -53,7 +91,29 @@ class TowerOfHanoiGame(GameMaster):
             None
         """
         ### Student code goes here
-        pass
+        disk = movable_statement.terms[0].__str__()
+        op = movable_statement.terms[1].__str__()
+        np = movable_statement.terms[2].__str__()
+
+        self.kb.kb_retract(Fact(Statement(['on', disk, op])))
+        self.kb.kb_assert(Fact(Statement(['on', disk, np])))
+
+        if self.kb.kb_ask(Fact(Statement(["onTopOf", disk, '?X']))):
+            under = self.kb.kb_ask(Fact(Statement(["onTopOf", disk, '?X'])))[0].bindings_dict['?X']
+            self.kb.kb_retract(Fact(Statement(['onTopOf', disk, under])))
+        else:
+            self.kb.kb_assert(Fact(Statement(['empty', op])))
+
+        if parse_input("fact: (empty %s)" % np):
+            self.kb.kb_retract(Fact(Statement(['empty', np])))
+
+        self.kb.kb_retract(Fact(Statement(['top', disk, op])))
+        self.kb.kb_assert(Fact(Statement(['top', disk, np])))
+
+        if self.kb.kb_ask(Fact(Statement(['onTopOf', '?X', np]))):
+            rep = self.kb.kb_ask(Fact(Statement(['onTopOf', '?X', np])))[0].bindings_dict['?X']
+            self.kb.kb_retract(Fact(Statement(['onTop', rep, np])))
+            self.kb.kb_assert(Fact(Statement(['onTopOf', disk, rep])))
 
     def reverseMove(self, movable_statement):
         """
@@ -100,7 +160,22 @@ class Puzzle8Game(GameMaster):
             A Tuple of Tuples that represent the game state
         """
         ### Student code goes here
-        pass
+        t_dict = {"tile1": 1, "tile2": 2, "tile3": 3, "tile4": 4, "tile5": 5, "tile6": 6, "tile7": 7, "tile8": 8, "empty": -1}
+        x_dict = {"pos1": 0, "pos2": 1, "pos3": 2}
+
+        list_r1 = [0,0,0]
+        for i in self.kb.kb_ask(Fact(Statement(["coordinate", '?tile', '?X', "pos1"]))):
+            list_r1[x_dict[i.bindings_dict['?X']]] = t_dict[i.bindings_dict['?tile']]
+
+        list_r2 = [0, 0, 0]
+        for i in self.kb.kb_ask(Fact(Statement(["coordinate", '?tile', '?X', "pos2"]))):
+            list_r2[x_dict[i.bindings_dict['?X']]] = t_dict[i.bindings_dict['?tile']]
+
+        list_r3 = [0, 0, 0]
+        for i in self.kb.kb_ask(Fact(Statement(["coordinate", '?tile', '?X', "pos3"]))):
+            list_r3[x_dict[i.bindings_dict['?X']]] = t_dict[i.bindings_dict['?tile']]
+
+        return tuple((tuple(list_r1), tuple(list_r2), tuple(list_r3)))
 
     def makeMove(self, movable_statement):
         """
@@ -119,7 +194,16 @@ class Puzzle8Game(GameMaster):
             None
         """
         ### Student code goes here
-        pass
+        tile_num = movable_statement.terms[0].__str__()
+        o_x_posn = movable_statement.terms[1].__str__()
+        n_x_posn = movable_statement.terms[3].__str__()
+        o_y_posn = movable_statement.terms[2].__str__()
+        n_y_posn = movable_statement.terms[4].__str__()
+
+        self.kb.kb_retract(Fact(Statement(['coordinate', tile_num, o_x_posn, o_y_posn])))
+        self.kb.kb_assert(Fact(Statement(['coordinate', tile_num, n_x_posn, n_y_posn])))
+        self.kb.kb_retract(Fact(Statement(['coordinate', 'empty', n_x_posn, n_y_posn])))
+        self.kb.kb_assert(Fact(Statement(['coordinate', 'empty', o_x_posn, o_y_posn])))
 
     def reverseMove(self, movable_statement):
         """
