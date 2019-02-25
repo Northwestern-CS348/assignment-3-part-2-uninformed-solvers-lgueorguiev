@@ -20,32 +20,42 @@ class SolverDFS(UninformedSolver):
             True if the desired solution state is reached, False otherwise
         """
         ### Student code goes here
-        if self.currentState.state == self.victoryCondition:
+        currState = self.currentState
+        vicCond = self.victoryCondition
+
+        if currState.state == vicCond:
             return True
+        else:
+            if self.gm.getMovables():
+                for i in self.gm.getMovables():
+                    self.gm.makeMove(i)
 
-        moves = self.gm.getMovables()
-        if moves:
-            for x in moves:
-                self.gm.makeMove(x)
-                newState = GameState(self.gm.getGameState(), self.currentState.depth + 1, x)
-                newState.parent = self.currentState
-                self.gm.reverseMove(x)
-                if not newState in self.visited:
-                    self.currentState.children.append(newState)
+                    newState = GameState(self.gm.getGameState(), currState.depth + 1, i)
+                    newState.parent = currState
 
-        while True:
-            if self.currentState.state == self.victoryCondition:
-                return True
-            n = self.currentState.nextChildToVisit
+                    self.gm.reverseMove(i)
 
-            if n < len(self.currentState.children):
-                self.currentState.nextChildToVisit += 1
-                self.gm.makeMove(self.currentState.children[n].requiredMovable)
-                self.currentState = self.currentState.children[n]
-                self.visited[self.currentState] = True
-                return self.currentState.state == self.victoryCondition
-            else:
-                self.currentState = self.currentState.parent
+                    if not newState in self.visited:
+                        currState.children.append(newState)
+
+            while True:
+                if currState.state == vicCond:
+                    return True
+                else:
+                    index = currState.nextChildToVisit
+
+                    if index < len(currState.children):
+                        currState.nextChildToVisit = currState.nextChildToVisit + 1
+                        self.gm.makeMove(currState.children[index].requiredMovable)
+                        self.currentState = currState.children[index]
+                        self.visited[currState] = True
+
+                        if currState.state == vicCond:
+                            return True
+                        else:
+                            return False
+                    else:
+                        currState = currState.parent
 
 class SolverBFS(UninformedSolver):
     def __init__(self, gameMaster, victoryCondition):
