@@ -60,8 +60,9 @@ class SolverDFS(UninformedSolver):
 class SolverBFS(UninformedSolver):
     def __init__(self, gameMaster, victoryCondition):
         super().__init__(gameMaster, victoryCondition)
-    q = Queue()
-    move_counter = 0
+
+    que = Queue()
+    counter = 0
 
     def solveOneStep(self):
         """
@@ -75,54 +76,55 @@ class SolverBFS(UninformedSolver):
         Returns:
             True if the desired solution state is reached, False otherwise
         """
-        movables = self.gm.getMovables()
-        visited = self.visited
-        if self.currentState.state == self.victoryCondition:  # check to make sure we're not already at victory state
+        currState = self.currentState
+        vicCond = self.victoryCondition
 
-            if (self.q != self.q.empty()):
-                while not self.q.empty():
-                    self.q.get()
+        if currState.state == vicCond:
+            if not self.que.empty():
+                while not self.que.empty():
+                    self.que.get()
             return True
 
-        if (movables):
-            for i in movables:
-                self.gm.makeMove(i)
-                child = GameState(self.gm.getGameState(), 0, i)
-                self.currentState.children.append(child)
-                child.parent = self.currentState
-                self.gm.reverseMove(i)
+        else:
+            if (self.gm.getMovables()):
+                for i in self.gm.getMovables():
+                    self.gm.makeMove(i)
+                    child = GameState(self.gm.getGameState(), 0, i)
+                    currState.children.append(child)
+                    child.parent = currState
+                    self.gm.reverseMove(i)
 
-        for i in self.currentState.children:
-            if i not in visited:
-                self.q.put(i)
+            for i in currState.children:
+                if i not in self.visited:
+                    self.que.put(i)
+            if self.que.empty():
+                pass
+            else:
+                while not self.que.empty():
+                    child = self.que.get()
 
-        while not self.q.empty():
+                    if child not in self.visited:
+                        lower = list()
 
-            child = self.q.get()
+                        while currState.requiredMovable:
+                            lower.append(currState.requiredMovable)
+                            currState = currState.parent
+                        currState = child
+                        upper = list()
 
-            if child not in visited:
-                curr = self.currentState
-                base = []
+                        while currState.requiredMovable:
+                            upper.append(currState.requiredMovable)
+                            currState = currState.parent
+                        upper = reversed(upper)
 
-                while (curr.requiredMovable):
-                    base.append(curr.requiredMovable)
-                    curr = curr.parent
-                curr = child
-                branch = []
+                        for i in lower:
+                            self.gm.reverseMove(i)
 
-                while curr.requiredMovable:
-                    branch.append(curr.requiredMovable)
-                    curr = curr.parent
-                branch = reversed(branch)
+                        for i in upper:
+                            self.gm.makeMove(i)
 
-                for k in base:
-                    self.gm.reverseMove(k)
-
-                for j in branch:
-                    self.gm.makeMove(j)
-
-                visited[child] = True
-                self.currentState = child
-                self.move_counter = self.move_counter + 1
-                self.currentState.depth = self.move_counter
-                break
+                        self.visited[child] = True
+                        self.currentState = child
+                        self.counter+=1
+                        self.currentState.depth = self.counter
+                        break
